@@ -647,6 +647,8 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         value, and should accept an array of shape [M, N] and the keyword
         argument ``axis=1``, and reduce it to an array of size [M].
 
+    weights : Used in Ward linkage. Experimental.
+
     Attributes
     ----------
     labels_ : array [n_samples]
@@ -671,7 +673,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     def __init__(self, n_clusters=2, affinity="euclidean",
                  memory=Memory(cachedir=None, verbose=0),
                  connectivity=None, compute_full_tree='auto',
-                 linkage='ward', pooling_func=np.mean):
+                 linkage='ward', pooling_func=np.mean, weights=None):
         self.n_clusters = n_clusters
         self.memory = memory
         self.connectivity = connectivity
@@ -679,6 +681,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         self.linkage = linkage
         self.affinity = affinity
         self.pooling_func = pooling_func
+        self.weights = weights
 
     def fit(self, X, y=None):
         """Fit the hierarchical clustering on the data
@@ -740,6 +743,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         self.children_, self.n_components_, self.n_leaves_, parents = \
             memory.cache(tree_builder)(X, connectivity,
                                        n_clusters=n_clusters,
+                                       weights=self.weights,
                                        **kwargs)
         # Cut the tree
         if compute_full_tree:
