@@ -39,7 +39,8 @@ def compute_ward_dist(np.ndarray[DOUBLE, ndim=1, mode='c'] m_1,
                       np.ndarray[DOUBLE, ndim=2, mode='c'] m_2,
                       np.ndarray[INTP, ndim=1, mode='c'] coord_row,
                       np.ndarray[INTP, ndim=1, mode='c'] coord_col,
-                      np.ndarray[DOUBLE, ndim=1, mode='c'] res):
+                      np.ndarray[DOUBLE, ndim=1, mode='c'] res,
+                      np.ndarray[DOUBLE, ndim=1, mode='c'] weights):
     cdef INTP size_max = coord_row.shape[0]
     cdef INTP n_features = m_2.shape[1]
     cdef INTP i, j, row, col
@@ -51,7 +52,8 @@ def compute_ward_dist(np.ndarray[DOUBLE, ndim=1, mode='c'] m_1,
         n = (m_1[row] * m_1[col]) / (m_1[row] + m_1[col])
         pa = 0.
         for j in range(n_features):
-            pa += (m_2[row, j] / m_1[row] - m_2[col, j] / m_1[col]) ** 2
+            pa += ((m_2[row, j] / m_1[row] - m_2[col, j] / m_1[col]) ** 2) \
+                   * weights[j]
         res[i] = pa * n
     return res
 
@@ -236,8 +238,8 @@ def max_merge(IntFloatDict a, IntFloatDict b,
 def average_merge(IntFloatDict a, IntFloatDict b,
               np.ndarray[ITYPE_t, ndim=1] mask,
               ITYPE_t n_a, ITYPE_t n_b):
-    """Merge two IntFloatDicts with the average strategy: when the 
-    same key is present in the two dicts, the weighted average of the two 
+    """Merge two IntFloatDicts with the average strategy: when the
+    same key is present in the two dicts, the weighted average of the two
     values is used.
 
     Parameters
@@ -290,13 +292,13 @@ def average_merge(IntFloatDict a, IntFloatDict b,
 
 
 ###############################################################################
-# An edge object for fast comparisons 
+# An edge object for fast comparisons
 
 cdef class WeightedEdge:
     cdef public ITYPE_t a
     cdef public ITYPE_t b
     cdef public DTYPE_t weight
-    
+
     def __init__(self, DTYPE_t weight, ITYPE_t a, ITYPE_t b):
         self.weight = weight
         self.a = a
@@ -326,9 +328,8 @@ cdef class WeightedEdge:
             return self.weight > other.weight
         elif op == 5:
             return self.weight >= other.weight
-        
+
     def __repr__(self):
         return "%s(weight=%f, a=%i, b=%i)" % (self.__class__.__name__,
                                               self.weight,
                                               self.a, self.b)
-

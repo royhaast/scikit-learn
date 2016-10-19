@@ -84,7 +84,8 @@ def _fix_connectivity(X, connectivity, n_components=None,
 ###############################################################################
 # Hierarchical tree building functions
 
-def ward_tree(X, connectivity=None, n_clusters=None, return_distance=False):
+def ward_tree(X, connectivity=None, n_clusters=None, return_distance=False,
+              weights=None):
     """Ward clustering based on a Feature matrix.
 
     Recursively merges the pair of clusters that minimally increases
@@ -118,6 +119,9 @@ def ward_tree(X, connectivity=None, n_clusters=None, return_distance=False):
 
     return_distance: bool (optional)
         If True, return the distance between the clusters.
+
+    weights: array (optional), shape (n_features)
+        Weight ward distances. Experimental.
 
     Returns
     -------
@@ -221,8 +225,13 @@ def ward_tree(X, connectivity=None, n_clusters=None, return_distance=False):
     moments_2 = np.zeros((n_nodes, n_features), order='C')
     moments_2[:n_samples] = X
     inertia = np.empty(len(coord_row), dtype=np.float64, order='C')
+
+    # handle weights
+    if weights is None:
+        weights = np.ones(n_features)
+
     _hierarchical.compute_ward_dist(moments_1, moments_2, coord_row, coord_col,
-                                    inertia)
+                                    inertia, weights)
     inertia = list(six.moves.zip(inertia, coord_row, coord_col))
     heapify(inertia)
 
