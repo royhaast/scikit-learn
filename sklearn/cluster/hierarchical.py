@@ -277,7 +277,7 @@ def ward_tree(X, connectivity=None, n_clusters=None, return_distance=False,
         ini = np.empty(n_additions, dtype=np.float64, order='C')
 
         _hierarchical.compute_ward_dist(moments_1, moments_2,
-                                        coord_row, coord_col, ini)
+                                        coord_row, coord_col, ini, weights)
 
         # List comprehension is faster than a for loop
         [heappush(inertia, (ini[idx], k, coord_col[idx]))
@@ -740,10 +740,15 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         if self.linkage != 'ward':
             kwargs['linkage'] = self.linkage
             kwargs['affinity'] = self.affinity
+
+        weights = self.weights
+        if self.weights is None:
+            weights = np.ones(4)
+
         self.children_, self.n_components_, self.n_leaves_, parents = \
             memory.cache(tree_builder)(X, connectivity,
                                        n_clusters=n_clusters,
-                                       weights=self.weights,
+                                       weights=weights,
                                        **kwargs)
         # Cut the tree
         if compute_full_tree:
